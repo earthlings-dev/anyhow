@@ -45,14 +45,14 @@ where
         unsafe { Box::from_raw(self.ptr.as_ptr()) }
     }
 
-    pub fn by_ref(&self) -> Ref<T> {
+    pub fn by_ref(&self) -> Ref<'_, T> {
         Ref {
             ptr: self.ptr,
             lifetime: PhantomData,
         }
     }
 
-    pub fn by_mut(&mut self) -> Mut<T> {
+    pub fn by_mut(&mut self) -> Mut<'_, T> {
         Mut {
             ptr: self.ptr,
             lifetime: PhantomData,

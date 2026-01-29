@@ -12,6 +12,7 @@
     clippy::let_and_return,
     clippy::let_underscore_untyped,
     clippy::literal_string_with_formatting_args,
+    clippy::manual_dangling_ptr,
     clippy::match_bool,
     clippy::needless_else,
     clippy::never_loop,
@@ -29,7 +30,7 @@
 )]
 
 use self::Enum::Generic;
-use anyhow::{anyhow, ensure, Chain, Error, Result};
+use anyhow::{Chain, Error, Result, anyhow, ensure};
 use std::fmt::{self, Debug};
 use std::iter;
 use std::marker::{PhantomData, PhantomData as P};

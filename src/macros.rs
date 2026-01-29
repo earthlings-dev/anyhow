@@ -54,7 +54,7 @@
 /// # }
 /// ```
 #[macro_export]
-#[cfg_attr(not(anyhow_no_clippy_format_args), clippy::format_args)]
+#[clippy::format_args]
 macro_rules! bail {
     ($msg:literal $(,)?) => {
         return $crate::__private::Err($crate::__anyhow!($msg))
@@ -155,7 +155,7 @@ __ensure![
 #[cfg(not(doc))]
 __ensure![
     #[macro_export]
-    #[cfg_attr(not(anyhow_no_clippy_format_args), clippy::format_args)]
+    #[clippy::format_args]
     macro_rules! ensure {
         ($($tt:tt)*) => {
             $crate::__parse_ensure!(
@@ -200,7 +200,7 @@ __ensure![
 /// }
 /// ```
 #[macro_export]
-#[cfg_attr(not(anyhow_no_clippy_format_args), clippy::format_args)]
+#[clippy::format_args]
 macro_rules! anyhow {
     ($msg:literal $(,)?) => {
         $crate::__private::must_use({

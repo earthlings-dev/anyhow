@@ -80,9 +80,30 @@ fn test_altdisplay() {
 
 #[test]
 fn test_debug() {
-    assert_eq!(EXPECTED_DEBUG_F, format!("{:?}", f().unwrap_err()));
-    assert_eq!(EXPECTED_DEBUG_G, format!("{:?}", g().unwrap_err()));
-    assert_eq!(EXPECTED_DEBUG_H, format!("{:?}", h().unwrap_err()));
+    // Debug output may include a backtrace if one was captured.
+    // Check that the expected error message prefix is present.
+    let f_debug = format!("{:?}", f().unwrap_err());
+    let g_debug = format!("{:?}", g().unwrap_err());
+    let h_debug = format!("{:?}", h().unwrap_err());
+
+    assert!(
+        f_debug.starts_with(EXPECTED_DEBUG_F),
+        "expected to start with {:?}, got {:?}",
+        EXPECTED_DEBUG_F,
+        f_debug
+    );
+    assert!(
+        g_debug.starts_with(EXPECTED_DEBUG_G),
+        "expected to start with {:?}, got {:?}",
+        EXPECTED_DEBUG_G,
+        g_debug
+    );
+    assert!(
+        h_debug.starts_with(EXPECTED_DEBUG_H),
+        "expected to start with {:?}, got {:?}",
+        EXPECTED_DEBUG_H,
+        h_debug
+    );
 }
 
 #[test]

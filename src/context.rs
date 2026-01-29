@@ -15,7 +15,6 @@ mod ext {
             C: Display + Send + Sync + 'static;
     }
 
-    #[cfg(any(feature = "std", not(anyhow_no_core_error)))]
     impl<E> StdError for E
     where
         E: crate::StdError + Send + Sync + 'static,

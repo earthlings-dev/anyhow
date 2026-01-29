@@ -13,7 +13,7 @@
 mod common;
 
 use self::common::*;
-use anyhow::{anyhow, ensure, Result};
+use anyhow::{Result, anyhow, ensure};
 use std::cell::Cell;
 use std::future;
 

@@ -40,7 +40,7 @@ impl ErrorImpl {
             }
         }
 
-        #[cfg(any(std_backtrace, feature = "backtrace"))]
+        #[cfg(std_backtrace)]
         {
             use crate::backtrace::BacktraceStatus;
             use alloc::string::ToString;

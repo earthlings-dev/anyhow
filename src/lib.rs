@@ -128,10 +128,10 @@
 //!   # ;
 //!   ```
 //!
-//! - If using Rust &ge; 1.65, a backtrace is captured and printed with the
-//!   error if the underlying error type does not already provide its own. In
-//!   order to see backtraces, they must be enabled through the environment
-//!   variables described in [`std::backtrace`]:
+//! - A backtrace is captured and printed with the error if the underlying error
+//!   type does not already provide its own. In order to see backtraces, they
+//!   must be enabled through the environment variables described in
+//!   [`std::backtrace`]:
 //!
 //!   - If you want panics and errors to both have backtraces, set
 //!     `RUST_BACKTRACE=1`;
@@ -200,11 +200,6 @@
 //! [dependencies]
 //! anyhow = { version = "1.0", default-features = false }
 //! ```
-//!
-//! With versions of Rust older than 1.81, no_std mode may require an additional
-//! `.map_err(Error::msg)` when working with a non-Anyhow error type inside a
-//! function that returns Anyhow's error type, as the trait that `?`-based error
-//! conversions are defined by is only available in std in those old versions.
 
 #![doc(html_root_url = "https://docs.rs/anyhow/1.0.100")]
 #![cfg_attr(error_generic_member_access, feature(error_generic_member_access))]
@@ -216,7 +211,6 @@
     clippy::enum_glob_use,
     clippy::explicit_auto_deref,
     clippy::extra_unused_type_parameters,
-    clippy::incompatible_msrv,
     clippy::let_underscore_untyped,
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
@@ -234,7 +228,6 @@
     clippy::wildcard_imports,
     clippy::wrong_self_convention
 )]
-#![allow(unknown_lints, mismatched_lifetime_syntaxes)]
 
 #[cfg(all(
     anyhow_nightly_testing,
@@ -266,21 +259,11 @@ use crate::error::ErrorImpl;
 use crate::ptr::Own;
 use core::fmt::Display;
 
-#[cfg(all(not(feature = "std"), anyhow_no_core_error))]
-use core::fmt::Debug;
-
 #[cfg(feature = "std")]
 use std::error::Error as StdError;
 
-#[cfg(not(any(feature = "std", anyhow_no_core_error)))]
+#[cfg(not(feature = "std"))]
 use core::error::Error as StdError;
-
-#[cfg(all(not(feature = "std"), anyhow_no_core_error))]
-trait StdError: Debug + Display {
-    fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        None
-    }
-}
 
 #[doc(no_inline)]
 pub use anyhow as format_err;
@@ -410,7 +393,6 @@ pub struct Error {
 ///     None
 /// }
 /// ```
-#[cfg(any(feature = "std", not(anyhow_no_core_error)))]
 #[derive(Clone)]
 pub struct Chain<'a> {
     state: crate::chain::ChainState<'a>,
@@ -670,11 +652,7 @@ pub mod __private {
     #[doc(hidden)]
     pub mod kind {
         #[doc(hidden)]
-        pub use crate::kind::{AdhocKind, TraitKind};
-
-        #[cfg(any(feature = "std", not(anyhow_no_core_error)))]
-        #[doc(hidden)]
-        pub use crate::kind::BoxedKind;
+        pub use crate::kind::{AdhocKind, BoxedKind, TraitKind};
     }
 
     #[doc(hidden)]

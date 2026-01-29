@@ -6,8 +6,8 @@
 
 - **Version**: 1.0.100
 - **Maintainer**: David Tolnay (dtolnay@gmail.com)
-- **Edition**: Rust 2021
-- **MSRV**: Rust 1.68
+- **Edition**: Rust 2024
+- **MSRV**: Rust 1.93
 - **License**: MIT OR Apache-2.0
 
 ## Repository Structure
@@ -20,13 +20,13 @@ anyhow/
 │   ├── ensure.rs          # ensure! macro internals (complex)
 │   ├── macros.rs          # anyhow!, bail!, ensure! macro definitions
 │   ├── context.rs         # Context trait for Result/Option
-│   ├── backtrace.rs       # Backtrace capture and display
+│   ├── backtrace.rs       # Backtrace capture and display (std::backtrace)
 │   ├── chain.rs           # Error chain iterator
 │   ├── kind.rs            # Tagged dispatch for macro type resolution
 │   ├── fmt.rs             # Error formatting (Display/Debug)
 │   ├── ptr.rs             # Pointer wrapper types (Own, Ref, Mut)
 │   ├── wrapper.rs         # Error wrapper types
-│   └── nightly.rs         # Nightly-only features
+│   └── nightly.rs         # Nightly-only features (error_generic_member_access)
 ├── tests/                  # Integration tests
 │   ├── test_*.rs          # Various test modules
 │   ├── ui/                # Compile-fail tests (trybuild)
@@ -52,14 +52,12 @@ anyhow/
 
 ### Feature Detection (build.rs)
 The build script probes compiler capabilities at build time:
-- Detects Rust version (1.65+, 1.81+, 1.85+)
-- Probes for `std::backtrace` availability
-- Detects `error_generic_member_access` (nightly)
+- Probes for `error_generic_member_access` (nightly)
 - Emits `cargo:rustc-cfg` flags for conditional compilation
 
 ### Conditional Compilation
 - `std` feature (default) - Full standard library support
-- `backtrace` feature - Legacy backtrace crate support (pre-1.65)
+- `std_backtrace` - Always enabled with MSRV 1.93 (std::backtrace stable since 1.65)
 - No-std mode - Disable `std` feature, requires global allocator
 
 ## Development Commands
@@ -68,7 +66,6 @@ The build script probes compiler capabilities at build time:
 ```bash
 cargo build                    # Standard build
 cargo build --no-default-features  # No-std build
-cargo build --features backtrace   # With legacy backtrace
 ```
 
 ### Testing
@@ -113,8 +110,8 @@ rustup run nightly cargo test
 ## CI Requirements
 
 All changes must pass:
-- Tests on Rust nightly, beta, stable, 1.82.0, 1.80.0, 1.76.0
-- MSRV check on Rust 1.68
+- Tests on Rust nightly, beta, stable
+- MSRV check on Rust 1.93.0
 - No-std build check
 - Clippy with pedantic lints (nightly)
 - Miri for undefined behavior detection
@@ -126,7 +123,7 @@ All changes must pass:
 ## Code Conventions
 
 ### Error Handling
-- All errors must implement `std::error::Error`
+- All errors must implement `std::error::Error` (or `core::error::Error` in no-std)
 - Use `Context` trait for adding context to errors
 - Prefer `?` operator for error propagation
 
@@ -140,6 +137,11 @@ All changes must pass:
 - Carefully audited and documented
 - Primarily in `ptr.rs` for pointer manipulation
 - `error.rs` contains layout optimization unsafe code
+
+### Edition 2024 Patterns
+- Use `#[unsafe(no_mangle)]` for FFI functions (not `#[no_mangle]`)
+- Use explicit lifetime syntax `Ref<'_, T>` for clarity
+- Use `&mut`/`&` prefix in match patterns when needed
 
 ### Documentation
 - Comprehensive rustdoc with examples
@@ -180,5 +182,7 @@ All changes must pass:
 - **build.rs creates probe directory** - Cleaned up automatically but may leave artifacts
 - **Single-word Error size** - Breaking this invariant would be a breaking change
 - **Sealed traits** - `Context` trait is sealed, cannot be implemented externally
-- **MSRV 1.68** - Don't use features unavailable in Rust 1.68
+- **MSRV 1.93** - Don't use features unavailable in Rust 1.93
+- **std::backtrace always available** - MSRV 1.93 > 1.65 when it was stabilized
+- **core::error::Error always available** - MSRV 1.93 > 1.81 when it was stabilized
 - **No breaking changes** - This is a 1.x crate with strict compatibility

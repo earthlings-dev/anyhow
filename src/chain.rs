@@ -1,23 +1,15 @@
 use self::ChainState::*;
 use crate::StdError;
 
-#[cfg(any(feature = "std", not(anyhow_no_core_error)))]
 use alloc::vec::{self, Vec};
 
-#[cfg(any(feature = "std", not(anyhow_no_core_error)))]
 pub(crate) use crate::Chain;
-
-#[cfg(all(not(feature = "std"), anyhow_no_core_error))]
-pub(crate) struct Chain<'a> {
-    state: ChainState<'a>,
-}
 
 #[derive(Clone)]
 pub(crate) enum ChainState<'a> {
     Linked {
         next: Option<&'a (dyn StdError + 'static)>,
     },
-    #[cfg(any(feature = "std", not(anyhow_no_core_error)))]
     Buffered {
         rest: vec::IntoIter<&'a (dyn StdError + 'static)>,
     },
@@ -42,7 +34,6 @@ impl<'a> Iterator for Chain<'a> {
                 *next = error.source();
                 Some(error)
             }
-            #[cfg(any(feature = "std", not(anyhow_no_core_error)))]
             Buffered { rest } => rest.next(),
         }
     }
@@ -53,11 +44,10 @@ impl<'a> Iterator for Chain<'a> {
     }
 }
 
-#[cfg(any(feature = "std", not(anyhow_no_core_error)))]
 impl DoubleEndedIterator for Chain<'_> {
     fn next_back(&mut self) -> Option<Self::Item> {
         match &mut self.state {
-            Linked { mut next } => {
+            &mut Linked { mut next } => {
                 let mut rest = Vec::new();
                 while let Some(cause) = next {
                     next = cause.source();
@@ -76,7 +66,7 @@ impl DoubleEndedIterator for Chain<'_> {
 impl ExactSizeIterator for Chain<'_> {
     fn len(&self) -> usize {
         match &self.state {
-            Linked { mut next } => {
+            &Linked { mut next } => {
                 let mut len = 0;
                 while let Some(cause) = next {
                     next = cause.source();
@@ -84,13 +74,11 @@ impl ExactSizeIterator for Chain<'_> {
                 }
                 len
             }
-            #[cfg(any(feature = "std", not(anyhow_no_core_error)))]
             Buffered { rest } => rest.len(),
         }
     }
 }
 
-#[cfg(any(feature = "std", not(anyhow_no_core_error)))]
 impl Default for Chain<'_> {
     fn default() -> Self {
         Chain {

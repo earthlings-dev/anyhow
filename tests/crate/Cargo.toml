@@ -2,7 +2,7 @@
 name = "anyhow_test"
 version = "0.0.0"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
-edition = "2021"
+edition = "2024"
 publish = false
 
 [lib]
@@ -14,4 +14,3 @@ anyhow = { path = "../..", default-features = false }
 [features]
 default = ["std"]
 std = ["anyhow/std"]
-backtrace = ["anyhow/backtrace"]

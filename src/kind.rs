@@ -45,12 +45,9 @@
 //     (&error).anyhow_kind().new(error)
 
 use crate::Error;
-use core::fmt::{Debug, Display};
-
-#[cfg(any(feature = "std", not(anyhow_no_core_error)))]
 use crate::StdError;
-#[cfg(any(feature = "std", not(anyhow_no_core_error)))]
 use alloc::boxed::Box;
+use core::fmt::{Debug, Display};
 
 pub struct Adhoc;
 
@@ -96,10 +93,8 @@ impl Trait {
     }
 }
 
-#[cfg(any(feature = "std", not(anyhow_no_core_error)))]
 pub struct Boxed;
 
-#[cfg(any(feature = "std", not(anyhow_no_core_error)))]
 #[doc(hidden)]
 pub trait BoxedKind: Sized {
     #[inline]
@@ -108,10 +103,8 @@ pub trait BoxedKind: Sized {
     }
 }
 
-#[cfg(any(feature = "std", not(anyhow_no_core_error)))]
 impl BoxedKind for Box<dyn StdError + Send + Sync> {}
 
-#[cfg(any(feature = "std", not(anyhow_no_core_error)))]
 impl Boxed {
     #[cold]
     pub fn new(self, error: Box<dyn StdError + Send + Sync>) -> Error {
