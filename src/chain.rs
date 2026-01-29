@@ -1,3 +1,8 @@
+//! Error chain iterator implementation.
+//!
+//! Provides iteration over the causal chain of an error, from the outermost
+//! error down to the root cause, using `std::error::Error::source`.
+
 use self::ChainState::*;
 use crate::StdError;
 
@@ -5,17 +10,25 @@ use alloc::vec::{self, Vec};
 
 pub(crate) use crate::Chain;
 
+/// Internal state for the [`Chain`] iterator.
+///
+/// The iterator starts in `Linked` state, lazily following the error's source
+/// chain. When reverse iteration is requested, it transitions to `Buffered`
+/// state by collecting all remaining errors into a vector.
 #[derive(Clone)]
 pub(crate) enum ChainState<'a> {
+    /// Lazily traverses the error chain via `source()` calls.
     Linked {
         next: Option<&'a (dyn StdError + 'static)>,
     },
+    /// Buffered errors for reverse iteration support.
     Buffered {
         rest: vec::IntoIter<&'a (dyn StdError + 'static)>,
     },
 }
 
 impl<'a> Chain<'a> {
+    /// Creates a new chain iterator starting from the given error.
     #[cold]
     pub fn new(head: &'a (dyn StdError + 'static)) -> Self {
         Chain {
@@ -45,6 +58,10 @@ impl<'a> Iterator for Chain<'a> {
 }
 
 impl DoubleEndedIterator for Chain<'_> {
+    /// Returns the next error from the end of the chain (root cause first).
+    ///
+    /// On first call, this collects all remaining errors into a buffer to
+    /// enable bidirectional iteration.
     fn next_back(&mut self) -> Option<Self::Item> {
         match &mut self.state {
             &mut Linked { mut next } => {
@@ -64,6 +81,9 @@ impl DoubleEndedIterator for Chain<'_> {
 }
 
 impl ExactSizeIterator for Chain<'_> {
+    /// Computes the number of errors in the chain.
+    ///
+    /// Note: In `Linked` state, this traverses the entire chain to count.
     fn len(&self) -> usize {
         match &self.state {
             &Linked { mut next } => {
@@ -80,6 +100,7 @@ impl ExactSizeIterator for Chain<'_> {
 }
 
 impl Default for Chain<'_> {
+    /// Creates an empty chain iterator.
     fn default() -> Self {
         Chain {
             state: ChainState::Buffered {

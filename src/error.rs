@@ -701,11 +701,14 @@ unsafe fn object_drop<E>(e: Own<ErrorImpl>) {
 }
 
 // Safety: requires layout of *e to match ErrorImpl<E>.
-unsafe fn object_drop_front<E>(e: Own<ErrorImpl>, target: TypeId) {
+unsafe fn object_drop_front<E>(e: Own<ErrorImpl>, target: TypeId)
+where
+    E: 'static,
+{
     // Drop the fields of ErrorImpl other than E as well as the Box allocation,
     // without dropping E itself. This is used by downcast after doing a
     // ptr::read to take ownership of the E.
-    let _ = target;
+    debug_assert_eq!(TypeId::of::<E>(), target, "downcast target type mismatch");
     let unerased_own = e.cast::<ErrorImpl<ManuallyDrop<E>>>();
     drop(unsafe { unerased_own.boxed() });
 }
@@ -762,9 +765,14 @@ where
     }
 }
 
+/// Returns `None` when generic member access is unavailable.
+///
+/// The `e` parameter is required for vtable signature compatibility with
+/// [`context_backtrace`], but cannot be used to extract a backtrace without
+/// the nightly `error_generic_member_access` feature's `provide` API.
 #[cfg(not(error_generic_member_access))]
-fn no_backtrace(e: Ref<'_, ErrorImpl>) -> Option<&Backtrace> {
-    let _ = e;
+#[allow(unused_variables)]
+fn no_backtrace<'a>(e: Ref<'a, ErrorImpl>) -> Option<&'a Backtrace> {
     None
 }
 
@@ -843,10 +851,19 @@ where
     }
 }
 
+/// Retrieves the backtrace from a context-wrapped error chain.
+///
+/// Recursively follows the error chain to find and return the backtrace
+/// captured when the original error was created.
+///
+/// # Vtable Signature Constraint
+///
+/// Returns `Option<&Backtrace>` to match the `object_backtrace` vtable field
+/// signature, which must accommodate both this function (always `Some`) and
+/// [`no_backtrace`] (always `None`).
 // Safety: requires layout of *e to match ErrorImpl<ContextError<C, Error>>.
 #[cfg(not(error_generic_member_access))]
-#[allow(clippy::unnecessary_wraps)]
-unsafe fn context_backtrace<C>(e: Ref<'_, ErrorImpl>) -> Option<&Backtrace>
+unsafe fn context_backtrace<'a, C>(e: Ref<'a, ErrorImpl>) -> Option<&'a Backtrace>
 where
     C: 'static,
 {
@@ -884,6 +901,10 @@ pub(crate) struct ContextError<C, E> {
 }
 
 impl<E> ErrorImpl<E> {
+    /// Erases the concrete error type `E` while preserving the vtable.
+    ///
+    /// Returns a type-erased reference that can be manipulated through the
+    /// vtable's function pointers.
     fn erase(&self) -> Ref<'_, ErrorImpl> {
         // Erase the concrete type of E but preserve the vtable in self.vtable
         // for manipulating the resulting thin pointer. This is analogous to an
@@ -893,13 +914,15 @@ impl<E> ErrorImpl<E> {
 }
 
 impl ErrorImpl {
-    pub(crate) unsafe fn error(this: Ref<'_, Self>) -> &(dyn StdError + Send + Sync + 'static) {
+    /// Retrieves a trait object reference to the underlying error.
+    pub(crate) unsafe fn error<'a>(this: Ref<'a, Self>) -> &'a (dyn StdError + Send + Sync + 'static) {
         // Use vtable to attach E's native StdError vtable for the right
         // original type E.
         unsafe { (vtable(this.ptr).object_ref)(this).deref() }
     }
 
-    pub(crate) unsafe fn error_mut(this: Mut<'_, Self>) -> &mut (dyn StdError + Send + Sync + 'static) {
+    /// Retrieves a mutable trait object reference to the underlying error.
+    pub(crate) unsafe fn error_mut<'a>(this: Mut<'a, Self>) -> &'a mut (dyn StdError + Send + Sync + 'static) {
         // Use vtable to attach E's native StdError vtable for the right
         // original type E.
         unsafe {
@@ -909,8 +932,13 @@ impl ErrorImpl {
         }
     }
 
+    /// Retrieves the backtrace associated with this error.
+    ///
+    /// First checks if a backtrace was captured during error construction.
+    /// If not, attempts to retrieve one from the underlying error via the
+    /// `provide` API (when available) or vtable lookup.
     #[cfg(std_backtrace)]
-    pub(crate) unsafe fn backtrace(this: Ref<'_, Self>) -> &Backtrace {
+    pub(crate) unsafe fn backtrace<'a>(this: Ref<'a, Self>) -> &'a Backtrace {
         // This unwrap can only panic if the underlying error's backtrace method
         // is nondeterministic, which would only happen in maliciously
         // constructed code.
@@ -926,6 +954,7 @@ impl ErrorImpl {
             .expect("backtrace capture failed")
     }
 
+    /// Provides backtrace and error data for the generic member access API.
     #[cfg(error_generic_member_access)]
     unsafe fn provide<'a>(this: Ref<'a, Self>, request: &mut Request<'a>) {
         if let Some(backtrace) = unsafe { &this.deref().backtrace } {

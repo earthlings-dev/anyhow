@@ -1,3 +1,22 @@
+//! Build script for the anyhow crate.
+//!
+//! Performs compile-time feature detection to enable optimal error handling
+//! based on compiler capabilities. This script probes for unstable features
+//! and emits appropriate `rustc-cfg` flags for conditional compilation.
+//!
+//! # Detected Features
+//!
+//! - **`error_generic_member_access`**: Unstable feature enabling richer
+//!   backtrace propagation via `std::error::Error::provide`.
+//!
+//! - **`std_backtrace`**: Always enabled with MSRV 1.93, as
+//!   `std::backtrace::Backtrace` is stable since Rust 1.65.
+//!
+//! # Environment Variables
+//!
+//! - `RUSTC_BOOTSTRAP`: Allows stable/beta compilers to use unstable features.
+//! - `RUSTC_STAGE`: Detected to avoid issues within rustc's bootstrap.
+
 use std::env;
 use std::ffi::OsString;
 use std::fs;
@@ -7,6 +26,7 @@ use std::path::Path;
 use std::process::{self, Command, Stdio};
 use std::str;
 
+/// Detects compiler features and emits `rustc-cfg` flags.
 fn main() {
     if cfg!(feature = "std") {
         println!("cargo:rerun-if-changed=src/nightly.rs");
