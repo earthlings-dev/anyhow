@@ -75,10 +75,9 @@ anyhow = "1.0"
   }
   ```
 
-- If using Rust &ge; 1.65, a backtrace is captured and printed with the error if
-  the underlying error type does not already provide its own. In order to see
-  backtraces, they must be enabled through the environment variables described
-  in [`std::backtrace`]:
+- A backtrace is captured and printed with the error if the underlying error
+  type does not already provide its own. In order to see backtraces, they must
+  be enabled through the environment variables described in [`std::backtrace`]:
 
   - If you want panics and errors to both have backtraces, set
     `RUST_BACKTRACE=1`;
@@ -133,11 +132,6 @@ Cargo.toml. A global allocator is required.
 [dependencies]
 anyhow = { version = "1.0", default-features = false }
 ```
-
-With versions of Rust older than 1.81, no_std mode may require an additional
-`.map_err(Error::msg)` when working with a non-Anyhow error type inside a
-function that returns Anyhow's error type, as the trait that `?`-based error
-conversions are defined by is only available in std in those old versions.
 
 <br>
 

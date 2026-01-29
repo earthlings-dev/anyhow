@@ -140,13 +140,67 @@ All changes must pass:
 
 ### Edition 2024 Patterns
 - Use `#[unsafe(no_mangle)]` for FFI functions (not `#[no_mangle]`)
-- Use explicit lifetime syntax `Ref<'_, T>` for clarity
-- Use `&mut`/`&` prefix in match patterns when needed
+- Use `&mut`/`&` prefix in match patterns when mutably binding through references
+- Use `io::Error::other()` instead of `io::Error::new(ErrorKind::Other, ...)`
 
-### Documentation
-- Comprehensive rustdoc with examples
+### Documentation Standards
+- Comprehensive rustdoc with examples on public APIs
 - Examples are tested as doctests
-- Special docs.rs configuration for external linking
+- Internal modules should have `//!` module-level documentation
+- Document non-obvious internal functions with `///` doc comments
+- Document vtable/trait signature constraints when they affect implementation
+
+## Code Quality Requirements
+
+### Avoiding Hacks and Workarounds
+
+**Do NOT use these patterns:**
+
+1. **`let _ = value;`** - Never use this to silence unused variable warnings
+   - Instead: Use the variable meaningfully (e.g., `debug_assert!`) or use `#[allow(unused_variables)]` with documentation explaining why
+
+2. **`_variable` prefix as a silencing hack** - Avoid when the variable could be used meaningfully
+   - Acceptable: In function parameters constrained by trait/vtable signatures where usage isn't possible
+   - Required: Documentation explaining why the parameter is unused
+
+3. **`#[allow(clippy::...)]`** - Avoid unless absolutely necessary
+   - Required: Documentation explaining the constraint that prevents fixing the lint
+   - Preferred: Restructure code to satisfy the lint
+
+### Explicit Lifetimes
+
+**Use explicit lifetime parameters instead of `'_` when:**
+
+1. **Standalone functions** where input/output lifetime relationships matter:
+   ```rust
+   // Good: Explicit relationship between input and output lifetimes
+   fn get_ref<'a>(e: Ref<'a, ErrorImpl>) -> Option<&'a Backtrace>
+
+   // Avoid: Anonymous lifetime hides the relationship
+   fn get_ref(e: Ref<'_, ErrorImpl>) -> Option<&Backtrace>
+   ```
+
+2. **`'_` is acceptable** in method return types clearly tied to `&self`:
+   ```rust
+   // Acceptable: Lifetime obviously tied to &self
+   fn by_ref(&self) -> Ref<'_, T>
+   ```
+
+### Vtable and Trait Constraints
+
+When implementing functions for vtables or trait objects:
+
+1. Document why the signature is constrained
+2. Use `#[allow(unused_variables)]` with explanation when parameters can't be used
+3. Use `debug_assert!` to validate invariants when parameters must exist for signature compatibility
+
+### Code Style Principles
+
+- **Explicit over implicit** - lifetimes, types, error handling
+- **No backwards-compatibility shims** - remove dead code completely
+- **No re-exports or aliases** just to silence warnings
+- **No `#[allow(dead_code)]`** - remove unused code entirely
+- **Idiomatic Rust 2024** - adopt new patterns, don't preserve old ones
 
 ## Important Files for Understanding the Codebase
 
