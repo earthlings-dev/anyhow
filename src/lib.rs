@@ -206,7 +206,7 @@
 //! function that returns Anyhow's error type, as the trait that `?`-based error
 //! conversions are defined by is only available in std in those old versions.
 
-#![doc(html_root_url = "https://docs.rs/anyhow/1.0.100")]
+#![doc(html_root_url = "https://docs.rs/anyhow/1.0.101")]
 #![cfg_attr(error_generic_member_access, feature(error_generic_member_access))]
 #![no_std]
 #![deny(dead_code, unsafe_op_in_unsafe_fn, unused_imports, unused_mut)]
@@ -646,6 +646,7 @@ pub trait Context<T, E>: context::private::Sealed {
 ///    |         consider giving this pattern the explicit type `std::result::Result<i32, E>`, where the type parameter `E` is specified
 /// ```
 #[allow(non_snake_case)]
+#[inline]
 pub fn Ok<T>(value: T) -> Result<T> {
     Result::Ok(value)
 }
