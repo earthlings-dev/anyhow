@@ -2,7 +2,8 @@
 name = "anyhow_test"
 version = "0.0.0"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
-edition = "2021"
+edition = "2024"
+rust-version = "1.93.0"
 publish = false
 
 [lib]

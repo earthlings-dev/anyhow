@@ -29,7 +29,7 @@
 )]
 
 use self::Enum::Generic;
-use anyhow::{anyhow, ensure, Chain, Error, Result};
+use anyhow::{Chain, Error, Result, anyhow, ensure};
 use std::fmt::{self, Debug};
 use std::iter;
 use std::marker::{PhantomData, PhantomData as P};
@@ -538,10 +538,10 @@ fn test_as() {
         "Condition failed: `&[0] as &[i32] == [1]` ([0] vs [1])",
     );
 
-    let test = || Ok(ensure!(0 as *const () as *mut _ == 1 as *mut ()));
+    let test = || Ok(ensure!(0 as *const () as *mut _ == std::ptr::dangling_mut::<()>()));
     assert_err(
         test,
-        "Condition failed: `0 as *const () as *mut _ == 1 as *mut ()` (0x0 vs 0x1)",
+        "Condition failed: `0 as *const () as *mut _ == std::ptr::dangling_mut::<()>()` (0x0 vs 0x1)",
     );
 
     let s = "";

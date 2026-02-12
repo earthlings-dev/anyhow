@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Chain, Error};
+use anyhow::{Chain, Error, anyhow};
 
 fn error() -> Error {
     anyhow!({ 0 }).context(1).context(2).context(3)
