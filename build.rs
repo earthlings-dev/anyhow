@@ -114,10 +114,11 @@ fn compile_probe(rustc_bootstrap: bool) -> bool {
     let probefile = Path::new("src").join("nightly.rs");
 
     if let Err(err) = fs::create_dir(&out_subdir)
-        && err.kind() != ErrorKind::AlreadyExists {
-            eprintln!("Failed to create {}: {}", out_subdir.display(), err);
-            process::exit(1);
-        }
+        && err.kind() != ErrorKind::AlreadyExists
+    {
+        eprintln!("Failed to create {}: {}", out_subdir.display(), err);
+        process::exit(1);
+    }
 
     let rustc_wrapper = env::var_os("RUSTC_WRAPPER").filter(|wrapper| !wrapper.is_empty());
     let rustc_workspace_wrapper =
@@ -150,11 +151,12 @@ fn compile_probe(rustc_bootstrap: bool) -> bool {
 
     // If Cargo wants to set RUSTFLAGS, use that.
     if let Ok(rustflags) = env::var("CARGO_ENCODED_RUSTFLAGS")
-        && !rustflags.is_empty() {
-            for arg in rustflags.split('\x1f') {
-                cmd.arg(arg);
-            }
+        && !rustflags.is_empty()
+    {
+        for arg in rustflags.split('\x1f') {
+            cmd.arg(arg);
         }
+    }
 
     let success = match cmd.status() {
         Ok(status) => status.success(),

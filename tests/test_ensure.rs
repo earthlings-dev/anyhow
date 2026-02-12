@@ -538,7 +538,11 @@ fn test_as() {
         "Condition failed: `&[0] as &[i32] == [1]` ([0] vs [1])",
     );
 
-    let test = || Ok(ensure!(0 as *const () as *mut _ == std::ptr::dangling_mut::<()>()));
+    let test = || {
+        Ok(ensure!(
+            0 as *const () as *mut _ == std::ptr::dangling_mut::<()>()
+        ))
+    };
     assert_err(
         test,
         "Condition failed: `0 as *const () as *mut _ == std::ptr::dangling_mut::<()>()` (0x0 vs 0x1)",
