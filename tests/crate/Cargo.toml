@@ -3,14 +3,14 @@ name = "anyhow_test"
 version = "0.0.0"
 authors = ["David Tolnay <dtolnay@gmail.com>"]
 edition = "2024"
-rust-version = "1.93.0"
+rust-version = "1.93"
 publish = false
 
 [lib]
 path = "test.rs"
 
 [dependencies]
-anyhow = { path = "../..", default-features = false }
+anyhow = { version = "1.0.101", path = "../..", default-features = false }
 
 [features]
 default = ["std"]
